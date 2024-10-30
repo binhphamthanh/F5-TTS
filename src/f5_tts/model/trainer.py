@@ -128,11 +128,21 @@ class Trainer:
             )
             if not os.path.exists(self.checkpoint_path):
                 os.makedirs(self.checkpoint_path)
+            # hardcode for specific training with colab
+            checkpoint_path_colab = "/content/drive/MyDrive/AI/TTS-F5-ckpts"
+            import threading
+
+            def save_checkpoint_thread(checkpoint, path):
+                self.accelerator.save(checkpoint, path)
+
             if last:
-                self.accelerator.save(checkpoint, f"{self.checkpoint_path}/model_last.pt")
-                print(f"Saved last checkpoint at step {step}")
+                t = threading.Thread(target=save_checkpoint_thread, args=(checkpoint, f"{checkpoint_path_colab}/model_last.pt"))
+                t.start()
+                print(f"Start background saving last checkpoint at step {step}")
             else:
-                self.accelerator.save(checkpoint, f"{self.checkpoint_path}/model_{step}.pt")
+                t = threading.Thread(target=save_checkpoint_thread, args=(checkpoint, f"{checkpoint_path_colab}/model_{step}.pt"))
+                t.start()
+                print(f"Start background saving checkpoint at step {step}")
 
     def load_checkpoint(self):
         if (
